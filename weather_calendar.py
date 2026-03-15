@@ -36,17 +36,46 @@ def get_calendar_service():
 def get_weather():
 
     url = (
-        "https://api.openweathermap.org/data/2.5/onecall"
-        f"?lat={LAT}&lon={LON}"
-        "&exclude=minutely,current,alerts"
-        "&units=imperial"
-        f"&appid={API_KEY}"
+        "https://api.open-meteo.com/v1/forecast"
+        f"?latitude={LAT}&longitude={LON}"
+        "&hourly=temperature_2m,precipitation_probability,wind_speed_10m"
+        "&daily=sunrise,sunset"
+        "&timezone=America/Denver"
     )
 
     r = requests.get(url)
     r.raise_for_status()
 
-    return r.json()
+    data = r.json()
+
+    hourly = []
+    for i, t in enumerate(data["hourly"]["time"]):
+
+        dt = datetime.datetime.fromisoformat(t)
+
+        hourly.append({
+            "dt": int(dt.timestamp()),
+            "temp": data["hourly"]["temperature_2m"][i],
+            "pop": data["hourly"]["precipitation_probability"][i] / 100,
+            "wind_speed": data["hourly"]["wind_speed_10m"][i]
+        })
+
+    daily = []
+    for i, d in enumerate(data["daily"]["time"]):
+
+        sunrise = datetime.datetime.fromisoformat(data["daily"]["sunrise"][i])
+        sunset = datetime.datetime.fromisoformat(data["daily"]["sunset"][i])
+
+        daily.append({
+            "dt": int(datetime.datetime.fromisoformat(d).timestamp()),
+            "sunrise": int(sunrise.timestamp()),
+            "sunset": int(sunset.timestamp())
+        })
+
+    return {
+        "hourly": hourly,
+        "daily": daily
+    }
     
 
 def build_daylight_map(daily):
