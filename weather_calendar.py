@@ -5,10 +5,19 @@ import datetime
 import pickle
 import math
 
-from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request
-from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
+
+def get_calendar_service():
+
+    creds_json = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT"])
+
+    credentials = service_account.Credentials.from_service_account_info(
+        creds_json,
+        scopes=["https://www.googleapis.com/auth/calendar"]
+    )
+
+    return build("calendar", "v3", credentials=credentials)
 
 
 # ------------------------------
