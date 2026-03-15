@@ -12,6 +12,7 @@ LON = -105.10
 
 TEMP_THRESHOLD = 60
 PRECIP_THRESHOLD = 0.2
+WIND_THRESHOLD = 20
 DAYS_FORWARD = 6
 
 API_KEY = os.environ["OPENWEATHER_API_KEY"]
@@ -80,6 +81,7 @@ def find_windows(hourly, daylight):
 
         temp = hour["temp"]
         pop = hour["pop"]
+        wind = hour["wind_speed"]
 
         if dt.date() not in daylight:
             continue
@@ -87,7 +89,12 @@ def find_windows(hourly, daylight):
         sunrise, sunset = daylight[dt.date()]
 
         daytime = sunrise <= dt <= sunset
-        good = temp > TEMP_THRESHOLD and pop < PRECIP_THRESHOLD and daytime
+        good = (
+            temp > TEMP_THRESHOLD
+            and pop < PRECIP_THRESHOLD
+            and wind < WIND_THRESHOLD
+            and daytime
+        )
 
         if good:
 
