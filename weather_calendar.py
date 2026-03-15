@@ -2,11 +2,23 @@ import os
 import json
 import requests
 import datetime
-import pickle
-import math
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+
+
+LAT = 40.17
+LON = -105.10
+
+TEMP_THRESHOLD = 60
+PRECIP_THRESHOLD = 0.2
+DAYS_FORWARD = 6
+
+API_KEY = os.environ["OPENWEATHER_API_KEY"]
+CALENDAR_ID = os.environ["CALENDAR_ID"]
+
+SCOPES = ["https://www.googleapis.com/auth/calendar"]
+
 
 def get_calendar_service():
 
@@ -14,70 +26,11 @@ def get_calendar_service():
 
     credentials = service_account.Credentials.from_service_account_info(
         creds_json,
-        scopes=["https://www.googleapis.com/auth/calendar"]
+        scopes=SCOPES
     )
 
     return build("calendar", "v3", credentials=credentials)
 
-
-# ------------------------------
-# SETTINGS
-# ------------------------------
-
-LAT = 40.17
-LON = -105.10
-TEMP_THRESHOLD = 60
-PRECIP_THRESHOLD = 0.2
-DAYS_FORWARD = 6
-
-API_KEY = os.environ["OPENWEATHER_API_KEY"]
-CALENDAR_ID = os.environ["CALENDAR_ID"]
-GOOGLE_CREDS = os.environ["GOOGLE_CREDENTIALS_JSON"]
-
-SCOPES = ["https://www.googleapis.com/auth/calendar"]
-
-
-# ------------------------------
-# WRITE GOOGLE CREDENTIAL FILE
-# ------------------------------
-
-with open("credentials.json", "w") as f:
-    f.write(GOOGLE_CREDS)
-
-
-# ------------------------------
-# AUTHENTICATION
-# ------------------------------
-
-def get_calendar_service():
-
-    creds = None
-
-    if os.path.exists("token.pickle"):
-        with open("token.pickle", "rb") as token:
-            creds = pickle.load(token)
-
-    if not creds or not creds.valid:
-
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                "credentials.json",
-                SCOPES
-            )
-            creds = flow.run_local_server(port=0)
-
-        with open("token.pickle", "wb") as token:
-            pickle.dump(creds, token)
-
-    return build("calendar", "v3", credentials=creds)
-
-
-# ------------------------------
-# GET WEATHER FORECAST
-# ------------------------------
 
 def get_weather():
 
@@ -95,10 +48,6 @@ def get_weather():
     return r.json()
 
 
-# ------------------------------
-# BUILD SUNRISE / SUNSET MAP
-# ------------------------------
-
 def build_daylight_map(daily):
 
     daylight = {}
@@ -114,10 +63,6 @@ def build_daylight_map(daily):
 
     return daylight
 
-
-# ------------------------------
-# FIND GOOD WEATHER WINDOWS
-# ------------------------------
 
 def find_windows(hourly, daylight):
 
@@ -167,10 +112,6 @@ def find_windows(hourly, daylight):
     return windows
 
 
-# ------------------------------
-# REMOVE SHORT WINDOWS
-# ------------------------------
-
 def filter_short_windows(windows):
 
     filtered = []
@@ -184,10 +125,6 @@ def filter_short_windows(windows):
 
     return filtered
 
-
-# ------------------------------
-# DELETE OLD WEATHER EVENTS
-# ------------------------------
 
 def delete_existing(service):
 
@@ -210,10 +147,6 @@ def delete_existing(service):
                 eventId=event["id"]
             ).execute()
 
-
-# ------------------------------
-# CREATE NEW EVENTS
-# ------------------------------
 
 def create_events(service, windows):
 
@@ -239,10 +172,6 @@ def create_events(service, windows):
             body=event
         ).execute()
 
-
-# ------------------------------
-# MAIN
-# ------------------------------
 
 def main():
 
