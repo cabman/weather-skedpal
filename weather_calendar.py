@@ -12,7 +12,7 @@ LON = -105.10
 
 TEMP_THRESHOLD = 60
 PRECIP_THRESHOLD = 0.2
-WIND_THRESHOLD = 20
+WIND_THRESHOLD = 25
 DAYS_FORWARD = 6
 
 CALENDAR_ID = os.environ["CALENDAR_ID"]
@@ -50,7 +50,7 @@ def get_weather():
     hourly = []
     for i, t in enumerate(data["hourly"]["time"]):
 
-        dt = datetime.datetime.fromisoformat(t)
+        dt = datetime.datetime.fromisoformat(t).replace(tzinfo=None)
 
         hourly.append({
             "dt": int(dt.timestamp()),
@@ -110,6 +110,7 @@ def find_windows(hourly, daylight):
         temp = hour["temp"]
         pop = hour["pop"]
         wind = hour["wind_speed"]
+        print(dt, temp, pop, wind)
 
         if dt.date() not in daylight:
             continue
@@ -124,6 +125,7 @@ def find_windows(hourly, daylight):
             and daytime
         )
 
+        print("Daytime:", sunrise <= dt <= sunset)
         if good:
 
             if current is None:
@@ -144,6 +146,7 @@ def find_windows(hourly, daylight):
     if current:
         windows.append(current)
 
+    
     return windows
 
 
