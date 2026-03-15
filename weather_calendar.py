@@ -15,7 +15,6 @@ PRECIP_THRESHOLD = 0.2
 WIND_THRESHOLD = 20
 DAYS_FORWARD = 6
 
-API_KEY = os.environ["OPENWEATHER_API_KEY"]
 CALENDAR_ID = os.environ["CALENDAR_ID"]
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
