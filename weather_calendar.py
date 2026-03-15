@@ -10,7 +10,7 @@ from googleapiclient.discovery import build
 LAT = 40.17
 LON = -105.10
 
-TEMP_THRESHOLD = 60
+TEMP_THRESHOLD = 15.6
 PRECIP_THRESHOLD = 0.2
 WIND_THRESHOLD = 25
 DAYS_FORWARD = 6
