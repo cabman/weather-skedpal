@@ -35,7 +35,7 @@ def get_calendar_service():
 def get_weather():
 
     url = (
-        "https://api.openweathermap.org/data/3.0/onecall"
+        "https://api.openweathermap.org/data/2.5/onecall"
         f"?lat={LAT}&lon={LON}"
         "&exclude=minutely,current,alerts"
         "&units=imperial"
@@ -46,7 +46,7 @@ def get_weather():
     r.raise_for_status()
 
     return r.json()
-
+    
 
 def build_daylight_map(daily):
 
