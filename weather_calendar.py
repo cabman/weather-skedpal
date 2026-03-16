@@ -75,7 +75,7 @@ def get_weather():
         "hourly": hourly,
         "daily": daily
     }
-    
+
 
 def build_daylight_map(daily):
 
@@ -110,14 +110,17 @@ def find_windows(hourly, daylight):
         temp = hour["temp"]
         pop = hour["pop"]
         wind = hour["wind_speed"]
-        print(dt, temp, pop, wind)
 
         if dt.date() not in daylight:
             continue
 
         sunrise, sunset = daylight[dt.date()]
 
-        daytime = sunrise <= dt <= sunset
+        hour_end = dt + datetime.timedelta(hours=1)
+
+        # daylight intersection check
+        daytime = (hour_end > sunrise) and (dt < sunset)
+
         good = (
             temp > TEMP_THRESHOLD
             and pop < PRECIP_THRESHOLD
@@ -125,7 +128,6 @@ def find_windows(hourly, daylight):
             and daytime
         )
 
-        print("Daytime:", sunrise <= dt <= sunset)
         if good:
 
             if current is None:
@@ -146,8 +148,32 @@ def find_windows(hourly, daylight):
     if current:
         windows.append(current)
 
-    
     return windows
+
+
+def trim_windows_to_daylight(windows, daylight):
+
+    trimmed = []
+
+    for w in windows:
+
+        start = w["start"]
+        end = w["end"] + datetime.timedelta(hours=1)
+
+        sunrise, sunset = daylight[start.date()]
+
+        # trim start to sunrise minute
+        if start < sunrise < end:
+            start = sunrise
+
+        # trim end to sunset minute
+        if start < sunset < end:
+            end = sunset
+
+        if end > start:
+            trimmed.append({"start": start, "end": end})
+
+    return trimmed
 
 
 def filter_short_windows(windows):
@@ -191,7 +217,7 @@ def create_events(service, windows):
     for w in windows:
 
         start = w["start"]
-        end = w["end"] + datetime.timedelta(hours=1)
+        end = w["end"]
 
         event = {
             "summary": "[weather]",
@@ -223,6 +249,8 @@ def main():
     daylight = build_daylight_map(daily)
 
     windows = find_windows(hourly, daylight)
+
+    windows = trim_windows_to_daylight(windows, daylight)
 
     windows = filter_short_windows(windows)
 
