@@ -5,6 +5,8 @@ import datetime
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 
 LAT = 40.17
@@ -42,9 +44,29 @@ def get_weather():
         "&timezone=America/Denver"
     )
 
-    r = requests.get(url)
+    session = requests.Session()
+    
+    retries = Retry(
+        total=5,
+        connect=5,   # retry connection errors
+        read=5,      # retry read errors
+        backoff_factor=1,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET"],
+    )
+    
+    adapter = HTTPAdapter(max_retries=retries)
+    
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    
+    r = session.get(
+        url,
+        timeout=10,
+        headers={"User-Agent": "weather-calendar/1.0"}
+    )
     r.raise_for_status()
-
+    
     data = r.json()
 
     hourly = []
@@ -241,7 +263,11 @@ def main():
 
     service = get_calendar_service()
 
-    weather = get_weather()
+    try:
+        weather = get_weather()
+    except Exception as e:
+        print("Weather fetch failed:", e)
+        return
 
     hourly = weather["hourly"]
     daily = weather["daily"]
